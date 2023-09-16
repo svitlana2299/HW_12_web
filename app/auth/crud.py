@@ -4,9 +4,14 @@ from fastapi import HTTPException, Depends, status
 from app.auth.jwt import verify_password, create_access_token, get_current_user
 
 def create_user(db: Session, user: User):
-    """
-    Створення нового користувача.
-    """
+    # Перевірка наявності користувача з таким email
+    existing_user = db.query(User).filter(User.email == user.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User with this email already exists",
+        )
+
     db_user = User(**user.dict())
     db_user.password = HashPassword.get_password_hash(user.password)
     db.add(db_user)
